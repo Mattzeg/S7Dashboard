@@ -2,8 +2,8 @@
 @inject S7Dashboard.Services.SidebarStateService SidebarState
 @implements IDisposable
 
-<div class="page @(SidebarState.IsCollapsed ? "sidebar-collapsed" : "")">
-    <div class="sidebar">
+<div class="page">
+    <div class="sidebar" style="@GetSidebarStyle()">
         <NavMenu />
     </div>
 
@@ -24,6 +24,11 @@
     protected override void OnInitialized()
     {
         SidebarState.OnChange += StateHasChanged;
+    }
+
+    private string GetSidebarStyle()
+    {
+        return SidebarState.IsCollapsed ? "width: 60px; overflow: hidden;" : "width: 250px;";
     }
 
     public void Dispose()
