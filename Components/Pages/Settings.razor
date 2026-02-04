@@ -135,7 +135,8 @@
                     <th>Höhe</th>
                     <th>Titel-Schrift</th>
                     <th>Wert-Schrift</th>
-                    <th>Farbe</th>
+                    <th>Hintergrund</th>
+                    <th>Schrift</th>
                     <th></th>
                 </tr>
             </thead>
@@ -159,6 +160,7 @@
                         <td><input type="number" class="form-control form-control-sm" @bind="tile.TitleFontSize" min="8" style="width: 60px;" /></td>
                         <td><input type="number" class="form-control form-control-sm" @bind="tile.ValueFontSize" min="12" style="width: 60px;" /></td>
                         <td><input type="color" class="form-control form-control-sm" @bind="tile.BackgroundColor" style="width: 50px; padding: 2px;" /></td>
+                        <td><input type="color" class="form-control form-control-sm" @bind="tile.TextColor" style="width: 50px; padding: 2px;" /></td>
                         <td>
                             <button class="btn btn-danger btn-sm" @onclick="() => DeleteTile(tile.Id)">X</button>
                         </td>
@@ -239,7 +241,8 @@
             Height = 1,
             TitleFontSize = 16,
             ValueFontSize = 32,
-            BackgroundColor = "#2196F3"
+            BackgroundColor = "#2196F3",
+            TextColor = "#FFFFFF"
         });
     }
 

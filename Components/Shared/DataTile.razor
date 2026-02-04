@@ -26,7 +26,7 @@
 
     private string GetTileStyle()
     {
-        var styles = $"background-color: {TileConfig.BackgroundColor};";
+        var styles = $"background-color: {TileConfig.BackgroundColor}; color: {TileConfig.TextColor};";
 
         // Größe über span setzen (ohne Startposition = keine Überlappung)
         if (TileConfig.Width > 1)

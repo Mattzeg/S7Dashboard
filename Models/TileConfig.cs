@@ -11,4 +11,5 @@ public class TileConfig
     public int TitleFontSize { get; set; } = 16;
     public int ValueFontSize { get; set; } = 32;
     public string BackgroundColor { get; set; } = "#2196F3";
+    public string TextColor { get; set; } = "#FFFFFF";
 }
