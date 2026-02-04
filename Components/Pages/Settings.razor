@@ -1,0 +1,285 @@
+@page "/settings"
+@using S7Dashboard.Models
+@using S7Dashboard.Services
+@inject ConfigurationService ConfigService
+@inject S7CommunicationService S7Service
+@rendermode InteractiveServer
+
+<PageTitle>Einstellungen</PageTitle>
+
+<div class="settings-container">
+    <h1>Einstellungen</h1>
+
+    <!-- SPS-Verbindung -->
+    <section class="settings-section">
+        <h2>SPS-Verbindung</h2>
+        <div class="form-group">
+            <label>IP-Adresse</label>
+            <input type="text" class="form-control" @bind="_config.PlcConfiguration.IpAddress" />
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Rack</label>
+                    <input type="number" class="form-control" @bind="_config.PlcConfiguration.Rack" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Slot</label>
+                    <input type="number" class="form-control" @bind="_config.PlcConfiguration.Slot" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Polling-Intervall (ms)</label>
+                    <input type="number" class="form-control" @bind="_config.PlcConfiguration.PollingIntervalMs" min="100" />
+                </div>
+            </div>
+        </div>
+        <div class="button-group">
+            <button class="btn btn-secondary" @onclick="TestConnection" disabled="@_isTesting">
+                @if (_isTesting)
+                {
+                    <span>Teste...</span>
+                }
+                else
+                {
+                    <span>Verbindung testen</span>
+                }
+            </button>
+            @if (_testResult.HasValue)
+            {
+                <span class="@(_testResult.Value ? "text-success" : "text-danger")">
+                    @(_testResult.Value ? "Verbindung erfolgreich" : "Verbindung fehlgeschlagen")
+                </span>
+            }
+        </div>
+    </section>
+
+    <!-- Grid-Einstellungen -->
+    <section class="settings-section">
+        <h2>Grid-Einstellungen</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Spalten</label>
+                    <input type="number" class="form-control" @bind="_config.GridColumns" min="1" max="12" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Zeilen</label>
+                    <input type="number" class="form-control" @bind="_config.GridRows" min="1" max="12" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Datenpunkte -->
+    <section class="settings-section">
+        <h2>Datenpunkte</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>DB</th>
+                    <th>Byte</th>
+                    <th>Typ</th>
+                    <th>Einheit</th>
+                    <th>Skalierung</th>
+                    <th>Offset</th>
+                    <th>Dezimalstellen</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dp in _config.DataPoints)
+                {
+                    <tr>
+                        <td><input type="text" class="form-control form-control-sm" @bind="dp.Name" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="dp.DbNumber" style="width: 70px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="dp.StartByte" style="width: 70px;" /></td>
+                        <td>
+                            <select class="form-control form-control-sm" @bind="dp.DataType">
+                                <option value="Real">Real</option>
+                                <option value="Int">Int</option>
+                                <option value="DInt">DInt</option>
+                                <option value="Bool">Bool</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="form-control form-control-sm" @bind="dp.Unit" style="width: 60px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="dp.ScaleFactor" step="0.01" style="width: 80px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="dp.Offset" step="0.01" style="width: 80px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="dp.DecimalPlaces" min="0" max="6" style="width: 60px;" /></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteDataPoint(dp.Id)">X</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <button class="btn btn-primary" @onclick="AddDataPoint">Datenpunkt hinzufügen</button>
+    </section>
+
+    <!-- Kacheln -->
+    <section class="settings-section">
+        <h2>Kacheln</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Datenpunkt</th>
+                    <th>Pos X</th>
+                    <th>Pos Y</th>
+                    <th>Breite</th>
+                    <th>Höhe</th>
+                    <th>Titel-Schrift</th>
+                    <th>Wert-Schrift</th>
+                    <th>Farbe</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tile in _config.Tiles)
+                {
+                    <tr>
+                        <td>
+                            <select class="form-control form-control-sm" @bind="tile.DataPointId">
+                                <option value="">-- Auswählen --</option>
+                                @foreach (var dp in _config.DataPoints)
+                                {
+                                    <option value="@dp.Id">@dp.Name</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="tile.PositionX" min="1" style="width: 60px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="tile.PositionY" min="1" style="width: 60px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="tile.Width" min="1" style="width: 60px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="tile.Height" min="1" style="width: 60px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="tile.TitleFontSize" min="8" style="width: 60px;" /></td>
+                        <td><input type="number" class="form-control form-control-sm" @bind="tile.ValueFontSize" min="12" style="width: 60px;" /></td>
+                        <td><input type="color" class="form-control form-control-sm" @bind="tile.BackgroundColor" style="width: 50px; padding: 2px;" /></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTile(tile.Id)">X</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <button class="btn btn-primary" @onclick="AddTile">Kachel hinzufügen</button>
+    </section>
+
+    <!-- Speichern -->
+    <div class="save-section">
+        <button class="btn btn-success btn-lg" @onclick="SaveConfiguration">
+            Konfiguration speichern
+        </button>
+        @if (_saveMessage != null)
+        {
+            <span class="save-message @(_saveSuccess ? "text-success" : "text-danger")">
+                @_saveMessage
+            </span>
+        }
+    </div>
+</div>
+
+@code {
+    private DashboardConfig _config = new();
+    private bool _isTesting = false;
+    private bool? _testResult = null;
+    private string? _saveMessage = null;
+    private bool _saveSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        _config = ConfigService.GetConfiguration();
+    }
+
+    private async Task TestConnection()
+    {
+        _isTesting = true;
+        _testResult = null;
+        StateHasChanged();
+
+        _testResult = await S7Service.TestConnectionAsync(_config.PlcConfiguration);
+        _isTesting = false;
+    }
+
+    private void AddDataPoint()
+    {
+        _config.DataPoints.Add(new DataPointConfig
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "Neuer Datenpunkt",
+            DbNumber = 1,
+            StartByte = 0,
+            DataType = "Real",
+            Unit = "",
+            ScaleFactor = 1.0,
+            Offset = 0.0,
+            DecimalPlaces = 2
+        });
+    }
+
+    private void DeleteDataPoint(string id)
+    {
+        _config.DataPoints.RemoveAll(d => d.Id == id);
+        _config.Tiles.RemoveAll(t => t.DataPointId == id);
+    }
+
+    private void AddTile()
+    {
+        _config.Tiles.Add(new TileConfig
+        {
+            Id = Guid.NewGuid().ToString(),
+            DataPointId = _config.DataPoints.FirstOrDefault()?.Id ?? "",
+            PositionX = 1,
+            PositionY = 1,
+            Width = 1,
+            Height = 1,
+            TitleFontSize = 16,
+            ValueFontSize = 32,
+            BackgroundColor = "#2196F3"
+        });
+    }
+
+    private void DeleteTile(string id)
+    {
+        _config.Tiles.RemoveAll(t => t.Id == id);
+    }
+
+    private void SaveConfiguration()
+    {
+        try
+        {
+            ConfigService.UpdatePlcConfiguration(_config.PlcConfiguration);
+
+            // Alle DataPoints und Tiles neu speichern
+            var currentConfig = ConfigService.GetConfiguration();
+            currentConfig.DataPoints = _config.DataPoints;
+            currentConfig.Tiles = _config.Tiles;
+            currentConfig.GridColumns = _config.GridColumns;
+            currentConfig.GridRows = _config.GridRows;
+
+            // Direkt die gesamte Konfiguration schreiben
+            var configPath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
+            var json = System.Text.Json.JsonSerializer.Serialize(currentConfig, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            });
+            File.WriteAllText(configPath, json);
+
+            // Konfiguration neu laden
+            ConfigService.LoadConfiguration();
+
+            _saveMessage = "Konfiguration gespeichert!";
+            _saveSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            _saveMessage = $"Fehler: {ex.Message}";
+            _saveSuccess = false;
+        }
+    }
+}

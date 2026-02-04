@@ -1,0 +1,105 @@
+@page "/"
+@using S7Dashboard.Models
+@using S7Dashboard.Services
+@using S7Dashboard.Components.Shared
+@inject ConfigurationService ConfigService
+@inject DataPollingService PollingService
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>S7 Dashboard</PageTitle>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>S7-1500 Dashboard</h1>
+        <div class="connection-controls">
+            @if (PollingService.IsConnected)
+            {
+                <button class="btn btn-danger" @onclick="Disconnect">Trennen</button>
+            }
+            else
+            {
+                <button class="btn btn-success" @onclick="Connect">Verbinden</button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(PollingService.LastError))
+    {
+        <div class="alert alert-warning">
+            @PollingService.LastError
+        </div>
+    }
+
+    <div class="tile-grid" style="@GetGridStyle()">
+        @foreach (var tile in _config.Tiles)
+        {
+            var dataPoint = _config.DataPoints.FirstOrDefault(d => d.Id == tile.DataPointId);
+            _currentValues.TryGetValue(tile.DataPointId, out var value);
+
+            <DataTile TileConfig="tile" DataPoint="dataPoint" Value="value" />
+        }
+    </div>
+
+    @if (!_config.Tiles.Any())
+    {
+        <div class="no-tiles-message">
+            <p>Keine Kacheln konfiguriert.</p>
+            <p>Gehen Sie zu <a href="/settings">Einstellungen</a>, um Datenpunkte und Kacheln hinzuzufügen.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private DashboardConfig _config = new();
+    private Dictionary<string, double?> _currentValues = new();
+
+    protected override void OnInitialized()
+    {
+        _config = ConfigService.GetConfiguration();
+        _currentValues = PollingService.CurrentValues;
+
+        PollingService.ValuesUpdated += OnValuesUpdated;
+        PollingService.ConnectionStateChanged += OnConnectionStateChanged;
+        ConfigService.ConfigurationChanged += OnConfigurationChanged;
+    }
+
+    private void OnValuesUpdated(Dictionary<string, double?> values)
+    {
+        _currentValues = values;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnConnectionStateChanged(bool connected)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnConfigurationChanged()
+    {
+        _config = ConfigService.GetConfiguration();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Connect()
+    {
+        await PollingService.ConnectAsync();
+    }
+
+    private void Disconnect()
+    {
+        PollingService.Disconnect();
+    }
+
+    private string GetGridStyle()
+    {
+        return $"grid-template-columns: repeat({_config.GridColumns}, 1fr);";
+    }
+
+    public void Dispose()
+    {
+        PollingService.ValuesUpdated -= OnValuesUpdated;
+        PollingService.ConnectionStateChanged -= OnConnectionStateChanged;
+        ConfigService.ConfigurationChanged -= OnConfigurationChanged;
+    }
+}

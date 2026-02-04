@@ -1,0 +1,45 @@
+@using S7Dashboard.Models
+
+<div class="data-tile" style="@GetTileStyle()">
+    <div class="tile-title" style="font-size: @(TileConfig.TitleFontSize)px;">
+        @DataPoint?.Name
+    </div>
+    <div class="tile-value" style="font-size: @(TileConfig.ValueFontSize)px;">
+        @if (Value.HasValue)
+        {
+            <span>@FormatValue(Value.Value)</span>
+            <span class="tile-unit">@DataPoint?.Unit</span>
+        }
+        else
+        {
+            <span class="no-value">--</span>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public TileConfig TileConfig { get; set; } = new();
+    [Parameter] public DataPointConfig? DataPoint { get; set; }
+    [Parameter] public double? Value { get; set; }
+    [Parameter] public int GridColumns { get; set; } = 4;
+    [Parameter] public int GridRows { get; set; } = 3;
+
+    private string GetTileStyle()
+    {
+        var styles = $"background-color: {TileConfig.BackgroundColor};";
+
+        // Größe über span setzen (ohne Startposition = keine Überlappung)
+        if (TileConfig.Width > 1)
+            styles += $" grid-column: span {TileConfig.Width};";
+        if (TileConfig.Height > 1)
+            styles += $" grid-row: span {TileConfig.Height};";
+
+        return styles;
+    }
+
+    private string FormatValue(double value)
+    {
+        var decimalPlaces = DataPoint?.DecimalPlaces ?? 2;
+        return value.ToString($"F{decimalPlaces}");
+    }
+}

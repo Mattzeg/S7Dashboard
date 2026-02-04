@@ -1,0 +1,102 @@
+{
+  "plcConfiguration": {
+    "ipAddress": "192.168.0.1",
+    "rack": 0,
+    "slot": 1,
+    "pollingIntervalMs": 1000
+  },
+  "dataPoints": [
+    {
+      "id": "dp1",
+      "name": "Presse 1",
+      "dbNumber": 1,
+      "startByte": 0,
+      "dataType": "Real",
+      "unit": "A",
+      "scaleFactor": 1,
+      "offset": 0,
+      "decimalPlaces": 0
+    },
+    {
+      "id": "dp2",
+      "name": "Presse 2",
+      "dbNumber": 1,
+      "startByte": 4,
+      "dataType": "Real",
+      "unit": "A",
+      "scaleFactor": 1,
+      "offset": 0,
+      "decimalPlaces": 0
+    },
+    {
+      "id": "dp3",
+      "name": "Presse 3",
+      "dbNumber": 1,
+      "startByte": 8,
+      "dataType": "Real",
+      "unit": "A",
+      "scaleFactor": 1,
+      "offset": 0,
+      "decimalPlaces": 0
+    },
+    {
+      "id": "dp4",
+      "name": "Presse 4",
+      "dbNumber": 1,
+      "startByte": 12,
+      "dataType": "Real",
+      "unit": "A",
+      "scaleFactor": 1,
+      "offset": 0,
+      "decimalPlaces": 0
+    }
+  ],
+  "tiles": [
+    {
+      "id": "tile1",
+      "dataPointId": "dp1",
+      "positionX": 1,
+      "positionY": 1,
+      "width": 2,
+      "height": 2,
+      "titleFontSize": 16,
+      "valueFontSize": 48,
+      "backgroundColor": "#2196F3"
+    },
+    {
+      "id": "tile2",
+      "dataPointId": "dp2",
+      "positionX": 1,
+      "positionY": 2,
+      "width": 2,
+      "height": 2,
+      "titleFontSize": 16,
+      "valueFontSize": 48,
+      "backgroundColor": "#4CAF50"
+    },
+    {
+      "id": "tile3",
+      "dataPointId": "dp3",
+      "positionX": 3,
+      "positionY": 1,
+      "width": 2,
+      "height": 2,
+      "titleFontSize": 16,
+      "valueFontSize": 48,
+      "backgroundColor": "#FF9800"
+    },
+    {
+      "id": "tile4",
+      "dataPointId": "dp4",
+      "positionX": 3,
+      "positionY": 2,
+      "width": 2,
+      "height": 2,
+      "titleFontSize": 16,
+      "valueFontSize": 48,
+      "backgroundColor": "#9C27B0"
+    }
+  ],
+  "gridColumns": 4,
+  "gridRows": 4
+}
