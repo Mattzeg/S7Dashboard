@@ -1,9 +1,10 @@
 @inherits LayoutComponentBase
-@rendermode InteractiveServer
+@inject S7Dashboard.Services.SidebarStateService SidebarState
+@implements IDisposable
 
-<div class="page @(_sidebarCollapsed ? "sidebar-collapsed" : "")">
+<div class="page @(SidebarState.IsCollapsed ? "sidebar-collapsed" : "")">
     <div class="sidebar">
-        <NavMenu OnToggleSidebar="ToggleSidebar" IsCollapsed="_sidebarCollapsed" />
+        <NavMenu />
     </div>
 
     <main>
@@ -20,10 +21,13 @@
 </div>
 
 @code {
-    private bool _sidebarCollapsed = false;
-
-    private void ToggleSidebar()
+    protected override void OnInitialized()
     {
-        _sidebarCollapsed = !_sidebarCollapsed;
+        SidebarState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        SidebarState.OnChange -= StateHasChanged;
     }
 }

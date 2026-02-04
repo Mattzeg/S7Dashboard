@@ -1,11 +1,14 @@
 @using S7Dashboard.Services
 @inject DataPollingService PollingService
+@inject SidebarStateService SidebarState
+@rendermode InteractiveServer
+@implements IDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">@(IsCollapsed ? "S7" : "S7 Dashboard")</a>
-        <button class="sidebar-toggle" @onclick="OnToggleSidebar" title="@(IsCollapsed ? "Seitenleiste einblenden" : "Seitenleiste ausblenden")">
-            @if (IsCollapsed)
+        <a class="navbar-brand" href="">@(SidebarState.IsCollapsed ? "S7" : "S7 Dashboard")</a>
+        <button class="sidebar-toggle" @onclick="ToggleSidebar" title="@(SidebarState.IsCollapsed ? "Seitenleiste einblenden" : "Seitenleiste ausblenden")">
+            @if (SidebarState.IsCollapsed)
             {
                 <span class="toggle-icon">&#9654;</span>
             }
@@ -17,7 +20,7 @@
     </div>
 </div>
 
-@if (!IsCollapsed)
+@if (!SidebarState.IsCollapsed)
 {
     <div class="nav-scrollable">
         <nav class="nav flex-column">
@@ -50,6 +53,18 @@
 }
 
 @code {
-    [Parameter] public EventCallback OnToggleSidebar { get; set; }
-    [Parameter] public bool IsCollapsed { get; set; }
+    protected override void OnInitialized()
+    {
+        SidebarState.OnChange += StateHasChanged;
+    }
+
+    private void ToggleSidebar()
+    {
+        SidebarState.Toggle();
+    }
+
+    public void Dispose()
+    {
+        SidebarState.OnChange -= StateHasChanged;
+    }
 }

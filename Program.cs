@@ -12,6 +12,7 @@ builder.Services.AddSingleton<ConfigurationService>();
 builder.Services.AddSingleton<S7CommunicationService>();
 builder.Services.AddSingleton<DataPollingService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<DataPollingService>());
+builder.Services.AddScoped<SidebarStateService>();
 
 var app = builder.Build();
 
