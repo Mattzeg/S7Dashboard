@@ -3,37 +3,53 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">S7 Dashboard</a>
+        <a class="navbar-brand" href="">@(IsCollapsed ? "S7" : "S7 Dashboard")</a>
+        <button class="sidebar-toggle" @onclick="OnToggleSidebar" title="@(IsCollapsed ? "Seitenleiste einblenden" : "Seitenleiste ausblenden")">
+            @if (IsCollapsed)
+            {
+                <span class="toggle-icon">&#9654;</span>
+            }
+            else
+            {
+                <span class="toggle-icon">&#9664;</span>
+            }
+        </button>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@if (!IsCollapsed)
+{
+    <div class="nav-scrollable">
+        <nav class="nav flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
+                </NavLink>
+            </div>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
-            </NavLink>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="settings">
+                    <span class="bi bi-gear-fill-nav-menu" aria-hidden="true"></span> Einstellungen
+                </NavLink>
+            </div>
+        </nav>
+
+        <div class="connection-status px-3 py-2">
+            @if (PollingService.IsConnected)
+            {
+                <span class="status-indicator connected"></span>
+                <span>Verbunden</span>
+            }
+            else
+            {
+                <span class="status-indicator disconnected"></span>
+                <span>Nicht verbunden</span>
+            }
         </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="settings">
-                <span class="bi bi-gear-fill-nav-menu" aria-hidden="true"></span> Einstellungen
-            </NavLink>
-        </div>
-    </nav>
-
-    <div class="connection-status px-3 py-2">
-        @if (PollingService.IsConnected)
-        {
-            <span class="status-indicator connected"></span>
-            <span>Verbunden</span>
-        }
-        else
-        {
-            <span class="status-indicator disconnected"></span>
-            <span>Nicht verbunden</span>
-        }
     </div>
-</div>
+}
+
+@code {
+    [Parameter] public EventCallback OnToggleSidebar { get; set; }
+    [Parameter] public bool IsCollapsed { get; set; }
+}

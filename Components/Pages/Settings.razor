@@ -3,6 +3,7 @@
 @using S7Dashboard.Services
 @inject ConfigurationService ConfigService
 @inject S7CommunicationService S7Service
+@inject DataPollingService PollingService
 @rendermode InteractiveServer
 
 <PageTitle>Einstellungen</PageTitle>
@@ -57,6 +58,14 @@
                 </div>
             </div>
             <div class="button-group">
+                @if (PollingService.IsConnected)
+                {
+                    <button class="btn btn-danger" @onclick="Disconnect">Trennen</button>
+                }
+                else
+                {
+                    <button class="btn btn-success" @onclick="Connect">Verbinden</button>
+                }
                 <button class="btn btn-secondary" @onclick="TestConnection" disabled="@_isTesting">
                     @if (_isTesting)
                     {
@@ -296,6 +305,16 @@
 
         _testResult = await S7Service.TestConnectionAsync(_config.PlcConfiguration);
         _isTesting = false;
+    }
+
+    private async Task Connect()
+    {
+        await PollingService.ConnectAsync();
+    }
+
+    private void Disconnect()
+    {
+        PollingService.Disconnect();
     }
 
     private void AddDataPoint()

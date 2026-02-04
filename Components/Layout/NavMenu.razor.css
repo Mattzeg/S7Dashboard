@@ -1,27 +1,40 @@
-.navbar-toggler {
-    appearance: none;
-    cursor: pointer;
-    width: 3.5rem;
-    height: 2.5rem;
-    color: white;
-    position: absolute;
-    top: 0.5rem;
-    right: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
-}
-
-.navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
 .top-row {
     height: 3.5rem;
     background-color: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+}
+
+.top-row .container-fluid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .navbar-brand {
     font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.sidebar-toggle:hover {
+    opacity: 1;
+}
+
+.toggle-icon {
+    display: inline-block;
 }
 
 .bi {
@@ -78,13 +91,11 @@
 }
 
 .nav-scrollable {
-    display: none;
+    display: flex;
     flex-direction: column;
     justify-content: space-between;
-}
-
-.navbar-toggler:checked ~ .nav-scrollable {
-    display: flex;
+    height: calc(100vh - 3.5rem);
+    overflow-y: auto;
 }
 
 .connection-status {
@@ -110,16 +121,4 @@
 .status-indicator.disconnected {
     background-color: #f44336;
     box-shadow: 0 0 5px #f44336;
-}
-
-@media (min-width: 641px) {
-    .navbar-toggler {
-        display: none;
-    }
-
-    .nav-scrollable {
-        display: flex;
-        height: calc(100vh - 3.5rem);
-        overflow-y: auto;
-    }
 }

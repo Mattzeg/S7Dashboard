@@ -28,16 +28,6 @@
                 </div>
             }
         </div>
-        <div class="connection-controls">
-            @if (PollingService.IsConnected)
-            {
-                <button class="btn btn-danger" @onclick="Disconnect">Trennen</button>
-            }
-            else
-            {
-                <button class="btn btn-success" @onclick="Connect">Verbinden</button>
-            }
-        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(PollingService.LastError))
@@ -100,7 +90,6 @@
             _currentDashboard = _config.Dashboards.FirstOrDefault(d => d.Id == DashboardId);
         }
 
-        // Fallback zum ersten Dashboard
         _currentDashboard ??= _config.Dashboards.FirstOrDefault();
     }
 
@@ -125,16 +114,6 @@
         _config = ConfigService.GetConfiguration();
         SelectDashboard();
         InvokeAsync(StateHasChanged);
-    }
-
-    private async Task Connect()
-    {
-        await PollingService.ConnectAsync();
-    }
-
-    private void Disconnect()
-    {
-        PollingService.Disconnect();
     }
 
     private string GetGridStyle()
