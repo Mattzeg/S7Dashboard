@@ -33,6 +33,10 @@ public class ConfigurationService
             {
                 var json = File.ReadAllText(_configPath);
                 _config = JsonSerializer.Deserialize<DashboardConfig>(json, _jsonOptions) ?? new DashboardConfig();
+
+                // Migration: Legacy-Konfiguration zu neuem Format
+                MigrateLegacyConfig();
+
                 _logger.LogInformation("Konfiguration geladen von {Path}", _configPath);
             }
             else
@@ -49,10 +53,52 @@ public class ConfigurationService
         }
     }
 
+    private void MigrateLegacyConfig()
+    {
+        // Wenn es alte Tiles gibt aber keine Dashboards, migrieren
+        if (_config.Tiles != null && _config.Tiles.Any() && !_config.Dashboards.Any())
+        {
+            _config.Dashboards.Add(new Dashboard
+            {
+                Id = "default",
+                Name = "Haupt-Dashboard",
+                GridColumns = _config.GridColumns ?? 4,
+                GridRows = _config.GridRows ?? 3,
+                Tiles = _config.Tiles
+            });
+
+            // Legacy-Felder leeren
+            _config.Tiles = null;
+            _config.GridColumns = null;
+            _config.GridRows = null;
+
+            SaveConfiguration();
+            _logger.LogInformation("Legacy-Konfiguration migriert");
+        }
+
+        // Sicherstellen, dass mindestens ein Dashboard existiert
+        if (!_config.Dashboards.Any())
+        {
+            _config.Dashboards.Add(new Dashboard
+            {
+                Id = "default",
+                Name = "Haupt-Dashboard",
+                GridColumns = 4,
+                GridRows = 3,
+                Tiles = new List<TileConfig>()
+            });
+        }
+    }
+
     public void SaveConfiguration()
     {
         try
         {
+            // Legacy-Felder nicht speichern
+            _config.Tiles = null;
+            _config.GridColumns = null;
+            _config.GridRows = null;
+
             var json = JsonSerializer.Serialize(_config, _jsonOptions);
             File.WriteAllText(_configPath, json);
             _logger.LogInformation("Konfiguration gespeichert nach {Path}", _configPath);
@@ -90,37 +136,43 @@ public class ConfigurationService
     public void DeleteDataPoint(string id)
     {
         _config.DataPoints.RemoveAll(d => d.Id == id);
-        _config.Tiles.RemoveAll(t => t.DataPointId == id);
+        // Aus allen Dashboards entfernen
+        foreach (var dashboard in _config.Dashboards)
+        {
+            dashboard.Tiles.RemoveAll(t => t.DataPointId == id);
+        }
         SaveConfiguration();
     }
 
-    public void AddTile(TileConfig tile)
+    public Dashboard? GetDashboard(string id)
     {
-        _config.Tiles.Add(tile);
+        return _config.Dashboards.FirstOrDefault(d => d.Id == id);
+    }
+
+    public void AddDashboard(Dashboard dashboard)
+    {
+        _config.Dashboards.Add(dashboard);
         SaveConfiguration();
     }
 
-    public void UpdateTile(TileConfig tile)
+    public void UpdateDashboard(Dashboard dashboard)
     {
-        var index = _config.Tiles.FindIndex(t => t.Id == tile.Id);
+        var index = _config.Dashboards.FindIndex(d => d.Id == dashboard.Id);
         if (index >= 0)
         {
-            _config.Tiles[index] = tile;
+            _config.Dashboards[index] = dashboard;
             SaveConfiguration();
         }
     }
 
-    public void DeleteTile(string id)
+    public void DeleteDashboard(string id)
     {
-        _config.Tiles.RemoveAll(t => t.Id == id);
-        SaveConfiguration();
-    }
-
-    public void UpdateGridSize(int columns, int rows)
-    {
-        _config.GridColumns = columns;
-        _config.GridRows = rows;
-        SaveConfiguration();
+        // Mindestens ein Dashboard muss bleiben
+        if (_config.Dashboards.Count > 1)
+        {
+            _config.Dashboards.RemoveAll(d => d.Id == id);
+            SaveConfiguration();
+        }
     }
 
     private DashboardConfig CreateDefaultConfiguration()
@@ -161,35 +213,45 @@ public class ConfigurationService
                     DecimalPlaces = 2
                 }
             },
-            Tiles = new List<TileConfig>
+            Dashboards = new List<Dashboard>
             {
                 new()
                 {
-                    Id = "tile1",
-                    DataPointId = "dp1",
-                    PositionX = 1,
-                    PositionY = 1,
-                    Width = 1,
-                    Height = 1,
-                    TitleFontSize = 16,
-                    ValueFontSize = 32,
-                    BackgroundColor = "#2196F3"
-                },
-                new()
-                {
-                    Id = "tile2",
-                    DataPointId = "dp2",
-                    PositionX = 2,
-                    PositionY = 1,
-                    Width = 1,
-                    Height = 1,
-                    TitleFontSize = 16,
-                    ValueFontSize = 32,
-                    BackgroundColor = "#4CAF50"
+                    Id = "default",
+                    Name = "Haupt-Dashboard",
+                    GridColumns = 4,
+                    GridRows = 3,
+                    Tiles = new List<TileConfig>
+                    {
+                        new()
+                        {
+                            Id = "tile1",
+                            DataPointId = "dp1",
+                            PositionX = 1,
+                            PositionY = 1,
+                            Width = 1,
+                            Height = 1,
+                            TitleFontSize = 16,
+                            ValueFontSize = 32,
+                            BackgroundColor = "#2196F3",
+                            TextColor = "#FFFFFF"
+                        },
+                        new()
+                        {
+                            Id = "tile2",
+                            DataPointId = "dp2",
+                            PositionX = 2,
+                            PositionY = 1,
+                            Width = 1,
+                            Height = 1,
+                            TitleFontSize = 16,
+                            ValueFontSize = 32,
+                            BackgroundColor = "#4CAF50",
+                            TextColor = "#FFFFFF"
+                        }
+                    }
                 }
-            },
-            GridColumns = 4,
-            GridRows = 3
+            }
         };
     }
 }

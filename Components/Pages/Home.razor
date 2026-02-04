@@ -1,17 +1,33 @@
 @page "/"
+@page "/dashboard/{DashboardId}"
 @using S7Dashboard.Models
 @using S7Dashboard.Services
 @using S7Dashboard.Components.Shared
 @inject ConfigurationService ConfigService
 @inject DataPollingService PollingService
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 @implements IDisposable
 
-<PageTitle>S7 Dashboard</PageTitle>
+<PageTitle>@(_currentDashboard?.Name ?? "S7 Dashboard")</PageTitle>
 
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h1>S7-1500 Dashboard</h1>
+        <div class="dashboard-title-area">
+            <h1>@(_currentDashboard?.Name ?? "Dashboard")</h1>
+            @if (_config.Dashboards.Count > 1)
+            {
+                <div class="dashboard-tabs">
+                    @foreach (var db in _config.Dashboards)
+                    {
+                        <button class="dashboard-tab @(db.Id == _currentDashboard?.Id ? "active" : "")"
+                                @onclick="() => SwitchDashboard(db.Id)">
+                            @db.Name
+                        </button>
+                    }
+                </div>
+            }
+        </div>
         <div class="connection-controls">
             @if (PollingService.IsConnected)
             {
@@ -31,27 +47,33 @@
         </div>
     }
 
-    <div class="tile-grid" style="@GetGridStyle()">
-        @foreach (var tile in _config.Tiles)
-        {
-            var dataPoint = _config.DataPoints.FirstOrDefault(d => d.Id == tile.DataPointId);
-            _currentValues.TryGetValue(tile.DataPointId, out var value);
-
-            <DataTile TileConfig="tile" DataPoint="dataPoint" Value="value" />
-        }
-    </div>
-
-    @if (!_config.Tiles.Any())
+    @if (_currentDashboard != null)
     {
-        <div class="no-tiles-message">
-            <p>Keine Kacheln konfiguriert.</p>
-            <p>Gehen Sie zu <a href="/settings">Einstellungen</a>, um Datenpunkte und Kacheln hinzuzufügen.</p>
+        <div class="tile-grid" style="@GetGridStyle()">
+            @foreach (var tile in _currentDashboard.Tiles)
+            {
+                var dataPoint = _config.DataPoints.FirstOrDefault(d => d.Id == tile.DataPointId);
+                _currentValues.TryGetValue(tile.DataPointId, out var value);
+
+                <DataTile TileConfig="tile" DataPoint="dataPoint" Value="value" />
+            }
         </div>
+
+        @if (!_currentDashboard.Tiles.Any())
+        {
+            <div class="no-tiles-message">
+                <p>Keine Kacheln in diesem Dashboard.</p>
+                <p>Gehen Sie zu <a href="/settings">Einstellungen</a>, um Kacheln hinzuzufügen.</p>
+            </div>
+        }
     }
 </div>
 
 @code {
+    [Parameter] public string? DashboardId { get; set; }
+
     private DashboardConfig _config = new();
+    private Dashboard? _currentDashboard;
     private Dictionary<string, double?> _currentValues = new();
 
     protected override void OnInitialized()
@@ -59,9 +81,32 @@
         _config = ConfigService.GetConfiguration();
         _currentValues = PollingService.CurrentValues;
 
+        SelectDashboard();
+
         PollingService.ValuesUpdated += OnValuesUpdated;
         PollingService.ConnectionStateChanged += OnConnectionStateChanged;
         ConfigService.ConfigurationChanged += OnConfigurationChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        SelectDashboard();
+    }
+
+    private void SelectDashboard()
+    {
+        if (!string.IsNullOrEmpty(DashboardId))
+        {
+            _currentDashboard = _config.Dashboards.FirstOrDefault(d => d.Id == DashboardId);
+        }
+
+        // Fallback zum ersten Dashboard
+        _currentDashboard ??= _config.Dashboards.FirstOrDefault();
+    }
+
+    private void SwitchDashboard(string dashboardId)
+    {
+        Navigation.NavigateTo($"/dashboard/{dashboardId}");
     }
 
     private void OnValuesUpdated(Dictionary<string, double?> values)
@@ -78,6 +123,7 @@
     private void OnConfigurationChanged()
     {
         _config = ConfigService.GetConfiguration();
+        SelectDashboard();
         InvokeAsync(StateHasChanged);
     }
 
@@ -93,7 +139,8 @@
 
     private string GetGridStyle()
     {
-        return $"grid-template-columns: repeat({_config.GridColumns}, 1fr);";
+        if (_currentDashboard == null) return "";
+        return $"grid-template-columns: repeat({_currentDashboard.GridColumns}, 1fr);";
     }
 
     public void Dispose()

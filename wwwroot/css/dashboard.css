@@ -17,6 +17,39 @@
     color: #333;
 }
 
+.dashboard-title-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.dashboard-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.dashboard-tab {
+    padding: 0.4rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #495057;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.dashboard-tab:hover {
+    background: #e9ecef;
+}
+
+.dashboard-tab.active {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
 .connection-controls {
     display: flex;
     gap: 0.5rem;

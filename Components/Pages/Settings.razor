@@ -57,25 +57,6 @@
         </div>
     </section>
 
-    <!-- Grid-Einstellungen -->
-    <section class="settings-section">
-        <h2>Grid-Einstellungen</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Spalten</label>
-                    <input type="number" class="form-control" @bind="_config.GridColumns" min="1" max="12" />
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Zeilen</label>
-                    <input type="number" class="form-control" @bind="_config.GridRows" min="1" max="12" />
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Datenpunkte -->
     <section class="settings-section">
         <h2>Datenpunkte</h2>
@@ -122,53 +103,96 @@
         <button class="btn btn-primary" @onclick="AddDataPoint">Datenpunkt hinzufügen</button>
     </section>
 
-    <!-- Kacheln -->
+    <!-- Dashboards -->
     <section class="settings-section">
-        <h2>Kacheln</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Datenpunkt</th>
-                    <th>Pos X</th>
-                    <th>Pos Y</th>
-                    <th>Breite</th>
-                    <th>Höhe</th>
-                    <th>Titel-Schrift</th>
-                    <th>Wert-Schrift</th>
-                    <th>Hintergrund</th>
-                    <th>Schrift</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var tile in _config.Tiles)
+        <h2>Dashboards</h2>
+
+        <div class="dashboard-selector mb-3">
+            <label>Dashboard auswählen:</label>
+            <div class="d-flex gap-2 align-items-center">
+                <select class="form-control" style="max-width: 300px;" @bind="_selectedDashboardId">
+                    @foreach (var db in _config.Dashboards)
+                    {
+                        <option value="@db.Id">@db.Name</option>
+                    }
+                </select>
+                <button class="btn btn-success btn-sm" @onclick="AddDashboard">+ Neu</button>
+                @if (_config.Dashboards.Count > 1)
                 {
-                    <tr>
-                        <td>
-                            <select class="form-control form-control-sm" @bind="tile.DataPointId">
-                                <option value="">-- Auswählen --</option>
-                                @foreach (var dp in _config.DataPoints)
-                                {
-                                    <option value="@dp.Id">@dp.Name</option>
-                                }
-                            </select>
-                        </td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="tile.PositionX" min="1" style="width: 60px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="tile.PositionY" min="1" style="width: 60px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="tile.Width" min="1" style="width: 60px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="tile.Height" min="1" style="width: 60px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="tile.TitleFontSize" min="8" style="width: 60px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="tile.ValueFontSize" min="12" style="width: 60px;" /></td>
-                        <td><input type="color" class="form-control form-control-sm" @bind="tile.BackgroundColor" style="width: 50px; padding: 2px;" /></td>
-                        <td><input type="color" class="form-control form-control-sm" @bind="tile.TextColor" style="width: 50px; padding: 2px;" /></td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTile(tile.Id)">X</button>
-                        </td>
-                    </tr>
+                    <button class="btn btn-danger btn-sm" @onclick="DeleteSelectedDashboard">Löschen</button>
                 }
-            </tbody>
-        </table>
-        <button class="btn btn-primary" @onclick="AddTile">Kachel hinzufügen</button>
+            </div>
+        </div>
+
+        @if (_selectedDashboard != null)
+        {
+            <div class="dashboard-settings">
+                <h3>@_selectedDashboard.Name</h3>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Dashboard-Name</label>
+                            <input type="text" class="form-control" @bind="_selectedDashboard.Name" />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Spalten</label>
+                            <input type="number" class="form-control" @bind="_selectedDashboard.GridColumns" min="1" max="12" />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Zeilen</label>
+                            <input type="number" class="form-control" @bind="_selectedDashboard.GridRows" min="1" max="12" />
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Kacheln</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Datenpunkt</th>
+                            <th>Breite</th>
+                            <th>Höhe</th>
+                            <th>Titel-Schrift</th>
+                            <th>Wert-Schrift</th>
+                            <th>Hintergrund</th>
+                            <th>Schrift</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tile in _selectedDashboard.Tiles)
+                        {
+                            <tr>
+                                <td>
+                                    <select class="form-control form-control-sm" @bind="tile.DataPointId">
+                                        <option value="">-- Auswählen --</option>
+                                        @foreach (var dp in _config.DataPoints)
+                                        {
+                                            <option value="@dp.Id">@dp.Name</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td><input type="number" class="form-control form-control-sm" @bind="tile.Width" min="1" style="width: 60px;" /></td>
+                                <td><input type="number" class="form-control form-control-sm" @bind="tile.Height" min="1" style="width: 60px;" /></td>
+                                <td><input type="number" class="form-control form-control-sm" @bind="tile.TitleFontSize" min="8" style="width: 60px;" /></td>
+                                <td><input type="number" class="form-control form-control-sm" @bind="tile.ValueFontSize" min="12" style="width: 60px;" /></td>
+                                <td><input type="color" class="form-control form-control-sm" @bind="tile.BackgroundColor" style="width: 50px; padding: 2px;" /></td>
+                                <td><input type="color" class="form-control form-control-sm" @bind="tile.TextColor" style="width: 50px; padding: 2px;" /></td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteTile(tile.Id)">X</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <button class="btn btn-primary" @onclick="AddTile">Kachel hinzufügen</button>
+            </div>
+        }
     </section>
 
     <!-- Speichern -->
@@ -192,9 +216,13 @@
     private string? _saveMessage = null;
     private bool _saveSuccess = false;
 
+    private string _selectedDashboardId = "";
+    private Dashboard? _selectedDashboard => _config.Dashboards.FirstOrDefault(d => d.Id == _selectedDashboardId);
+
     protected override void OnInitialized()
     {
         _config = ConfigService.GetConfiguration();
+        _selectedDashboardId = _config.Dashboards.FirstOrDefault()?.Id ?? "";
     }
 
     private async Task TestConnection()
@@ -226,12 +254,41 @@
     private void DeleteDataPoint(string id)
     {
         _config.DataPoints.RemoveAll(d => d.Id == id);
-        _config.Tiles.RemoveAll(t => t.DataPointId == id);
+        // Aus allen Dashboards entfernen
+        foreach (var dashboard in _config.Dashboards)
+        {
+            dashboard.Tiles.RemoveAll(t => t.DataPointId == id);
+        }
+    }
+
+    private void AddDashboard()
+    {
+        var newDashboard = new Dashboard
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "Neues Dashboard",
+            GridColumns = 4,
+            GridRows = 3,
+            Tiles = new List<TileConfig>()
+        };
+        _config.Dashboards.Add(newDashboard);
+        _selectedDashboardId = newDashboard.Id;
+    }
+
+    private void DeleteSelectedDashboard()
+    {
+        if (_config.Dashboards.Count > 1 && _selectedDashboard != null)
+        {
+            _config.Dashboards.Remove(_selectedDashboard);
+            _selectedDashboardId = _config.Dashboards.First().Id;
+        }
     }
 
     private void AddTile()
     {
-        _config.Tiles.Add(new TileConfig
+        if (_selectedDashboard == null) return;
+
+        _selectedDashboard.Tiles.Add(new TileConfig
         {
             Id = Guid.NewGuid().ToString(),
             DataPointId = _config.DataPoints.FirstOrDefault()?.Id ?? "",
@@ -248,32 +305,21 @@
 
     private void DeleteTile(string id)
     {
-        _config.Tiles.RemoveAll(t => t.Id == id);
+        _selectedDashboard?.Tiles.RemoveAll(t => t.Id == id);
     }
 
     private void SaveConfiguration()
     {
         try
         {
-            ConfigService.UpdatePlcConfiguration(_config.PlcConfiguration);
-
-            // Alle DataPoints und Tiles neu speichern
-            var currentConfig = ConfigService.GetConfiguration();
-            currentConfig.DataPoints = _config.DataPoints;
-            currentConfig.Tiles = _config.Tiles;
-            currentConfig.GridColumns = _config.GridColumns;
-            currentConfig.GridRows = _config.GridRows;
-
-            // Direkt die gesamte Konfiguration schreiben
             var configPath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
-            var json = System.Text.Json.JsonSerializer.Serialize(currentConfig, new System.Text.Json.JsonSerializerOptions
+            var json = System.Text.Json.JsonSerializer.Serialize(_config, new System.Text.Json.JsonSerializerOptions
             {
                 WriteIndented = true,
                 PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
             });
             File.WriteAllText(configPath, json);
 
-            // Konfiguration neu laden
             ConfigService.LoadConfiguration();
 
             _saveMessage = "Konfiguration gespeichert!";
