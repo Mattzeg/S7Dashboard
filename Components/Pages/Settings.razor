@@ -8,205 +8,236 @@
 <PageTitle>Einstellungen</PageTitle>
 
 <div class="settings-container">
-    <h1>Einstellungen</h1>
-
-    <!-- SPS-Verbindung -->
-    <section class="settings-section">
-        <h2>SPS-Verbindung</h2>
-        <div class="form-group">
-            <label>IP-Adresse</label>
-            <input type="text" class="form-control" @bind="_config.PlcConfiguration.IpAddress" />
-        </div>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label>Rack</label>
-                    <input type="number" class="form-control" @bind="_config.PlcConfiguration.Rack" />
-                </div>
+    @if (!_isUnlocked && !string.IsNullOrEmpty(_config.SettingsPin))
+    {
+        <!-- PIN-Abfrage -->
+        <div class="pin-dialog">
+            <h2>PIN erforderlich</h2>
+            <p>Bitte geben Sie den PIN ein, um die Einstellungen zu bearbeiten.</p>
+            <div class="pin-input-group">
+                <input type="password" class="form-control" style="max-width: 200px;"
+                       @bind="_enteredPin" @onkeyup="OnPinKeyUp" placeholder="PIN eingeben" />
+                <button class="btn btn-primary" @onclick="CheckPin">Entsperren</button>
             </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label>Slot</label>
-                    <input type="number" class="form-control" @bind="_config.PlcConfiguration.Slot" />
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label>Polling-Intervall (ms)</label>
-                    <input type="number" class="form-control" @bind="_config.PlcConfiguration.PollingIntervalMs" min="100" />
-                </div>
-            </div>
-        </div>
-        <div class="button-group">
-            <button class="btn btn-secondary" @onclick="TestConnection" disabled="@_isTesting">
-                @if (_isTesting)
-                {
-                    <span>Teste...</span>
-                }
-                else
-                {
-                    <span>Verbindung testen</span>
-                }
-            </button>
-            @if (_testResult.HasValue)
+            @if (_pinError)
             {
-                <span class="@(_testResult.Value ? "text-success" : "text-danger")">
-                    @(_testResult.Value ? "Verbindung erfolgreich" : "Verbindung fehlgeschlagen")
+                <p class="text-danger mt-2">Falscher PIN!</p>
+            }
+        </div>
+    }
+    else
+    {
+        <h1>Einstellungen</h1>
+
+        <!-- SPS-Verbindung -->
+        <section class="settings-section">
+            <h2>SPS-Verbindung</h2>
+            <div class="form-group">
+                <label>IP-Adresse</label>
+                <input type="text" class="form-control" @bind="_config.PlcConfiguration.IpAddress" />
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Rack</label>
+                        <input type="number" class="form-control" @bind="_config.PlcConfiguration.Rack" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Slot</label>
+                        <input type="number" class="form-control" @bind="_config.PlcConfiguration.Slot" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Polling-Intervall (ms)</label>
+                        <input type="number" class="form-control" @bind="_config.PlcConfiguration.PollingIntervalMs" min="100" />
+                    </div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" @onclick="TestConnection" disabled="@_isTesting">
+                    @if (_isTesting)
+                    {
+                        <span>Teste...</span>
+                    }
+                    else
+                    {
+                        <span>Verbindung testen</span>
+                    }
+                </button>
+                @if (_testResult.HasValue)
+                {
+                    <span class="@(_testResult.Value ? "text-success" : "text-danger")">
+                        @(_testResult.Value ? "Verbindung erfolgreich" : "Verbindung fehlgeschlagen")
+                    </span>
+                }
+            </div>
+        </section>
+
+        <!-- PIN-Schutz -->
+        <section class="settings-section">
+            <h2>PIN-Schutz</h2>
+            <div class="form-group">
+                <label>Einstellungs-PIN (leer lassen = kein Schutz)</label>
+                <input type="text" class="form-control" style="max-width: 200px;"
+                       @bind="_config.SettingsPin" placeholder="z.B. 1234" />
+            </div>
+            <small class="text-muted">Der PIN wird im Klartext in der Konfigurationsdatei gespeichert.</small>
+        </section>
+
+        <!-- Datenpunkte -->
+        <section class="settings-section">
+            <h2>Datenpunkte</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>DB</th>
+                        <th>Byte</th>
+                        <th>Typ</th>
+                        <th>Einheit</th>
+                        <th>Skalierung</th>
+                        <th>Offset</th>
+                        <th>Dezimalstellen</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dp in _config.DataPoints)
+                    {
+                        <tr>
+                            <td><input type="text" class="form-control form-control-sm" @bind="dp.Name" /></td>
+                            <td><input type="number" class="form-control form-control-sm" @bind="dp.DbNumber" style="width: 70px;" /></td>
+                            <td><input type="number" class="form-control form-control-sm" @bind="dp.StartByte" style="width: 70px;" /></td>
+                            <td>
+                                <select class="form-control form-control-sm" @bind="dp.DataType">
+                                    <option value="Real">Real</option>
+                                    <option value="Int">Int</option>
+                                    <option value="DInt">DInt</option>
+                                    <option value="Bool">Bool</option>
+                                </select>
+                            </td>
+                            <td><input type="text" class="form-control form-control-sm" @bind="dp.Unit" style="width: 60px;" /></td>
+                            <td><input type="number" class="form-control form-control-sm" @bind="dp.ScaleFactor" step="0.01" style="width: 80px;" /></td>
+                            <td><input type="number" class="form-control form-control-sm" @bind="dp.Offset" step="0.01" style="width: 80px;" /></td>
+                            <td><input type="number" class="form-control form-control-sm" @bind="dp.DecimalPlaces" min="0" max="6" style="width: 60px;" /></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteDataPoint(dp.Id)">X</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button class="btn btn-primary" @onclick="AddDataPoint">Datenpunkt hinzufügen</button>
+        </section>
+
+        <!-- Dashboards -->
+        <section class="settings-section">
+            <h2>Dashboards</h2>
+
+            <div class="dashboard-selector mb-3">
+                <label>Dashboard auswählen:</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <select class="form-control" style="max-width: 300px;" @bind="_selectedDashboardId">
+                        @foreach (var db in _config.Dashboards)
+                        {
+                            <option value="@db.Id">@db.Name</option>
+                        }
+                    </select>
+                    <button class="btn btn-success btn-sm" @onclick="AddDashboard">+ Neu</button>
+                    @if (_config.Dashboards.Count > 1)
+                    {
+                        <button class="btn btn-danger btn-sm" @onclick="DeleteSelectedDashboard">Löschen</button>
+                    }
+                </div>
+            </div>
+
+            @if (_selectedDashboard != null)
+            {
+                <div class="dashboard-settings">
+                    <h3>@_selectedDashboard.Name</h3>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Dashboard-Name</label>
+                                <input type="text" class="form-control" @bind="_selectedDashboard.Name" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Spalten</label>
+                                <input type="number" class="form-control" @bind="_selectedDashboard.GridColumns" min="1" max="12" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Zeilen</label>
+                                <input type="number" class="form-control" @bind="_selectedDashboard.GridRows" min="1" max="12" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4>Kacheln</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Datenpunkt</th>
+                                <th>Breite</th>
+                                <th>Höhe</th>
+                                <th>Titel-Schrift</th>
+                                <th>Wert-Schrift</th>
+                                <th>Hintergrund</th>
+                                <th>Schrift</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tile in _selectedDashboard.Tiles)
+                            {
+                                <tr>
+                                    <td>
+                                        <select class="form-control form-control-sm" @bind="tile.DataPointId">
+                                            <option value="">-- Auswählen --</option>
+                                            @foreach (var dp in _config.DataPoints)
+                                            {
+                                                <option value="@dp.Id">@dp.Name</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td><input type="number" class="form-control form-control-sm" @bind="tile.Width" min="1" style="width: 60px;" /></td>
+                                    <td><input type="number" class="form-control form-control-sm" @bind="tile.Height" min="1" style="width: 60px;" /></td>
+                                    <td><input type="number" class="form-control form-control-sm" @bind="tile.TitleFontSize" min="8" style="width: 60px;" /></td>
+                                    <td><input type="number" class="form-control form-control-sm" @bind="tile.ValueFontSize" min="12" style="width: 60px;" /></td>
+                                    <td><input type="color" class="form-control form-control-sm" @bind="tile.BackgroundColor" style="width: 50px; padding: 2px;" /></td>
+                                    <td><input type="color" class="form-control form-control-sm" @bind="tile.TextColor" style="width: 50px; padding: 2px;" /></td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteTile(tile.Id)">X</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <button class="btn btn-primary" @onclick="AddTile">Kachel hinzufügen</button>
+                </div>
+            }
+        </section>
+
+        <!-- Speichern -->
+        <div class="save-section">
+            <button class="btn btn-success btn-lg" @onclick="SaveConfiguration">
+                Konfiguration speichern
+            </button>
+            @if (_saveMessage != null)
+            {
+                <span class="save-message @(_saveSuccess ? "text-success" : "text-danger")">
+                    @_saveMessage
                 </span>
             }
         </div>
-    </section>
-
-    <!-- Datenpunkte -->
-    <section class="settings-section">
-        <h2>Datenpunkte</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>DB</th>
-                    <th>Byte</th>
-                    <th>Typ</th>
-                    <th>Einheit</th>
-                    <th>Skalierung</th>
-                    <th>Offset</th>
-                    <th>Dezimalstellen</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var dp in _config.DataPoints)
-                {
-                    <tr>
-                        <td><input type="text" class="form-control form-control-sm" @bind="dp.Name" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="dp.DbNumber" style="width: 70px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="dp.StartByte" style="width: 70px;" /></td>
-                        <td>
-                            <select class="form-control form-control-sm" @bind="dp.DataType">
-                                <option value="Real">Real</option>
-                                <option value="Int">Int</option>
-                                <option value="DInt">DInt</option>
-                                <option value="Bool">Bool</option>
-                            </select>
-                        </td>
-                        <td><input type="text" class="form-control form-control-sm" @bind="dp.Unit" style="width: 60px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="dp.ScaleFactor" step="0.01" style="width: 80px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="dp.Offset" step="0.01" style="width: 80px;" /></td>
-                        <td><input type="number" class="form-control form-control-sm" @bind="dp.DecimalPlaces" min="0" max="6" style="width: 60px;" /></td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteDataPoint(dp.Id)">X</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-        <button class="btn btn-primary" @onclick="AddDataPoint">Datenpunkt hinzufügen</button>
-    </section>
-
-    <!-- Dashboards -->
-    <section class="settings-section">
-        <h2>Dashboards</h2>
-
-        <div class="dashboard-selector mb-3">
-            <label>Dashboard auswählen:</label>
-            <div class="d-flex gap-2 align-items-center">
-                <select class="form-control" style="max-width: 300px;" @bind="_selectedDashboardId">
-                    @foreach (var db in _config.Dashboards)
-                    {
-                        <option value="@db.Id">@db.Name</option>
-                    }
-                </select>
-                <button class="btn btn-success btn-sm" @onclick="AddDashboard">+ Neu</button>
-                @if (_config.Dashboards.Count > 1)
-                {
-                    <button class="btn btn-danger btn-sm" @onclick="DeleteSelectedDashboard">Löschen</button>
-                }
-            </div>
-        </div>
-
-        @if (_selectedDashboard != null)
-        {
-            <div class="dashboard-settings">
-                <h3>@_selectedDashboard.Name</h3>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>Dashboard-Name</label>
-                            <input type="text" class="form-control" @bind="_selectedDashboard.Name" />
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>Spalten</label>
-                            <input type="number" class="form-control" @bind="_selectedDashboard.GridColumns" min="1" max="12" />
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>Zeilen</label>
-                            <input type="number" class="form-control" @bind="_selectedDashboard.GridRows" min="1" max="12" />
-                        </div>
-                    </div>
-                </div>
-
-                <h4>Kacheln</h4>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Datenpunkt</th>
-                            <th>Breite</th>
-                            <th>Höhe</th>
-                            <th>Titel-Schrift</th>
-                            <th>Wert-Schrift</th>
-                            <th>Hintergrund</th>
-                            <th>Schrift</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var tile in _selectedDashboard.Tiles)
-                        {
-                            <tr>
-                                <td>
-                                    <select class="form-control form-control-sm" @bind="tile.DataPointId">
-                                        <option value="">-- Auswählen --</option>
-                                        @foreach (var dp in _config.DataPoints)
-                                        {
-                                            <option value="@dp.Id">@dp.Name</option>
-                                        }
-                                    </select>
-                                </td>
-                                <td><input type="number" class="form-control form-control-sm" @bind="tile.Width" min="1" style="width: 60px;" /></td>
-                                <td><input type="number" class="form-control form-control-sm" @bind="tile.Height" min="1" style="width: 60px;" /></td>
-                                <td><input type="number" class="form-control form-control-sm" @bind="tile.TitleFontSize" min="8" style="width: 60px;" /></td>
-                                <td><input type="number" class="form-control form-control-sm" @bind="tile.ValueFontSize" min="12" style="width: 60px;" /></td>
-                                <td><input type="color" class="form-control form-control-sm" @bind="tile.BackgroundColor" style="width: 50px; padding: 2px;" /></td>
-                                <td><input type="color" class="form-control form-control-sm" @bind="tile.TextColor" style="width: 50px; padding: 2px;" /></td>
-                                <td>
-                                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteTile(tile.Id)">X</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                <button class="btn btn-primary" @onclick="AddTile">Kachel hinzufügen</button>
-            </div>
-        }
-    </section>
-
-    <!-- Speichern -->
-    <div class="save-section">
-        <button class="btn btn-success btn-lg" @onclick="SaveConfiguration">
-            Konfiguration speichern
-        </button>
-        @if (_saveMessage != null)
-        {
-            <span class="save-message @(_saveSuccess ? "text-success" : "text-danger")">
-                @_saveMessage
-            </span>
-        }
-    </div>
+    }
 </div>
 
 @code {
@@ -219,10 +250,42 @@
     private string _selectedDashboardId = "";
     private Dashboard? _selectedDashboard => _config.Dashboards.FirstOrDefault(d => d.Id == _selectedDashboardId);
 
+    // PIN-Schutz
+    private bool _isUnlocked = false;
+    private string _enteredPin = "";
+    private bool _pinError = false;
+
     protected override void OnInitialized()
     {
         _config = ConfigService.GetConfiguration();
         _selectedDashboardId = _config.Dashboards.FirstOrDefault()?.Id ?? "";
+
+        // Wenn kein PIN gesetzt, direkt entsperren
+        if (string.IsNullOrEmpty(_config.SettingsPin))
+        {
+            _isUnlocked = true;
+        }
+    }
+
+    private void CheckPin()
+    {
+        if (_enteredPin == _config.SettingsPin)
+        {
+            _isUnlocked = true;
+            _pinError = false;
+        }
+        else
+        {
+            _pinError = true;
+        }
+    }
+
+    private void OnPinKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            CheckPin();
+        }
     }
 
     private async Task TestConnection()
@@ -254,7 +317,6 @@
     private void DeleteDataPoint(string id)
     {
         _config.DataPoints.RemoveAll(d => d.Id == id);
-        // Aus allen Dashboards entfernen
         foreach (var dashboard in _config.Dashboards)
         {
             dashboard.Tiles.RemoveAll(t => t.DataPointId == id);

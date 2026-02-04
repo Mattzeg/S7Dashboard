@@ -156,6 +156,33 @@
     font-weight: 500;
 }
 
+/* PIN Dialog */
+.pin-dialog {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+.pin-dialog h2 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.pin-dialog p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.pin-input-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
 /* Alert Styles */
 .alert {
     margin-bottom: 1rem;
