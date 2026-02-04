@@ -12,4 +12,12 @@ public class TileConfig
     public int ValueFontSize { get; set; } = 32;
     public string BackgroundColor { get; set; } = "#2196F3";
     public string TextColor { get; set; } = "#FFFFFF";
+
+    // Grenzwert-basierte Farbgebung
+    public bool UseThresholdColors { get; set; } = false;
+    public double? LowerThreshold { get; set; }
+    public double? UpperThreshold { get; set; }
+    public string ColorBelowLower { get; set; } = "#2196F3";  // Blau (unter unterer Grenze)
+    public string ColorInRange { get; set; } = "#4CAF50";     // Grün (im Bereich)
+    public string ColorAboveUpper { get; set; } = "#F44336"; // Rot (über oberer Grenze)
 }

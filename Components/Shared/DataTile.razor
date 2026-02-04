@@ -26,7 +26,8 @@
 
     private string GetTileStyle()
     {
-        var styles = $"background-color: {TileConfig.BackgroundColor}; color: {TileConfig.TextColor};";
+        var backgroundColor = GetBackgroundColor();
+        var styles = $"background-color: {backgroundColor}; color: {TileConfig.TextColor};";
 
         // Größe über span setzen (ohne Startposition = keine Überlappung)
         if (TileConfig.Width > 1)
@@ -35,6 +36,38 @@
             styles += $" grid-row: span {TileConfig.Height};";
 
         return styles;
+    }
+
+    private string GetBackgroundColor()
+    {
+        // Wenn Grenzwert-Farben nicht aktiviert oder kein Wert vorhanden
+        if (!TileConfig.UseThresholdColors || !Value.HasValue)
+        {
+            return TileConfig.BackgroundColor;
+        }
+
+        // Wenn keine Grenzwerte definiert
+        if (!TileConfig.LowerThreshold.HasValue && !TileConfig.UpperThreshold.HasValue)
+        {
+            return TileConfig.BackgroundColor;
+        }
+
+        var value = Value.Value;
+
+        // Unter unterer Grenze
+        if (TileConfig.LowerThreshold.HasValue && value < TileConfig.LowerThreshold.Value)
+        {
+            return TileConfig.ColorBelowLower;
+        }
+
+        // Über oberer Grenze
+        if (TileConfig.UpperThreshold.HasValue && value > TileConfig.UpperThreshold.Value)
+        {
+            return TileConfig.ColorAboveUpper;
+        }
+
+        // Im Bereich (zwischen den Grenzen)
+        return TileConfig.ColorInRange;
     }
 
     private string FormatValue(double value)
